@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>母材キャンセル入力</title>
+  
+  <!-- Modern Typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Integrations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338ca;
+      --secondary: #ec4899;
+      --bg: #0f172a;
+      --surface: rgba(30, 41, 59, 0.7);
+      --surface-border: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #cbd5e1;
+      --accent: #10b981;
+    }
+    
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Animated background elements */
+    .bg-shape {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: -1;
+      opacity: 0.4;
+      animation: float 10s infinite ease-in-out alternate;
+    }
+    .bg-shape-1 {
+      width: 300px;
+      height: 300px;
+      background: #4F46E5;
+      top: -100px;
+      left: -100px;
+    }
+    .bg-shape-2 {
+      width: 400px;
+      height: 400px;
+      background: #ec4899;
+      bottom: -150px;
+      right: -100px;
+      animation-delay: -5s;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(30px) scale(1.1); }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      padding: 24px;
+      box-sizing: border-box;
+      z-index: 1;
+      padding-bottom: 50px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-top: 20px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(to right, #a5b4fc, #f9a8d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+      letter-spacing: 0.05em;
+    }
+
+    /* Glassmorphism utility */
+    .glass-card {
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--surface-border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+      margin-bottom: 24px;
+    }
+
+    /* Buttons */
+    .btn-massive {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+      box-shadow: 0 5px 15px -3px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-top: 12px;
+    }
+
+    .btn-secondary:active, .btn-success:active {
+      transform: scale(0.98);
+    }
+
+    /* States */
+    .status-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-bottom: 20px;
+    }
+
+    /* Extracted items card */
+    .item-card {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--surface-border);
+      position: relative;
+      animation: slideUp 0.4s ease forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    
+    @keyframes slideUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .item-index {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      background: var(--primary);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    .grid-info {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .info-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .info-value.planned {
+      color: #38bdf8;
+      font-size: 1.3rem;
+    }
+
+    /* Stepper component */
+    .stepper-container {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+
+    .stepper-label {
+      font-size: 0.9rem;
+      color: #fca5a5;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .stepper-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 200px;
+    }
+
+    .btn-step {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-step:active {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(0.9);
+    }
+
+    .qty-input {
+      width: 60px;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 2rem;
+      font-weight: 800;
+      text-align: center;
+      outline: none;
+    }
+    
+    /* Remove input spinner */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+
+    /* Loaders */
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 0;
+    }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: conic-gradient(#0000 10%, #4F46E5);
+      -webkit-mask: radial-gradient(farthest-side, #0000 40%, #000 80%);
+      animation: spin 1s infinite linear;
+      margin-bottom: 24px;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(1turn); }
+    }
+
+    /* Thumbnail preview */
+    .preview-container {
+      width: 100%;
+      height: 160px;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      position: relative;
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .preview-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.7;
+    }
+
+    .preview-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+    
+    .camera-icon-wrapper {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 20px;
+      background: rgba(79, 70, 229, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(79, 70, 229, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-shape bg-shape-1"></div>
+  <div class="bg-shape bg-shape-2"></div>
+
+  <div class="container">
+    <header>
+      <h1>母材キャンセル入力</h1>
+    </header>
+
+    <!-- UI State 1: Upload / Camera -->
+    <div id="camera-section" class="glass-card text-center text-center">
+      <div class="status-badge">
+        <i class="fa-solid fa-circle-info"></i> 状態: 待機中
+      </div>
+      
+      <div style="padding: 20px 0;">
+        <div class="camera-icon-wrapper">
+          <i class="fa-solid fa-camera" style="font-size: 2.5rem; color: #a5b4fc;"></i>
+        </div>
+        <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 30px; font-weight: 500;">
+          伝票を撮影してください。<br>AIが記載されている母材情報を自動で読み取ります。
+        </p>
+        
+        <!-- capture="environment" to use mobile rear camera -->
+        <input type="file" accept="image/*" capture="environment" id="cameraInput" class="hidden">
+        
+        <button id="btn-start" class="btn-massive btn-primary">
+          <i class="fa-solid fa-camera"></i> カメラを起動して撮影
+        </button>
+      </div>
+    </div>
+
+    <!-- UI State 2: Processing -->
+    <div id="loading-section" class="glass-card hidden text-center">
+      <div class="status-badge" style="background: rgba(56, 189, 248, 0.2); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+        <i class="fa-solid fa-microchip fa-fade"></i> 状態: 解析中...
+      </div>
+      
+      <div class="preview-container">
+        <img id="preview-image" src="" alt="Captured Image">
+        <div class="preview-overlay"></div>
+      </div>
+
+      <div class="loader">
+        <div class="spinner"></div>
+        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600;">AIが伝票を解析中</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 8px;">しばらくお待ちください（数秒かかります）</p>
+      </div>
+    </div>
+
+    <!-- UI State 3: Results & Input -->
+    <div id="result-section" class="hidden">
+      <div class="text-center">
+        <div class="status-badge" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
+          <i class="fa-solid fa-check"></i> 状態: 解析完了
+        </div>
+      </div>
+
+      <div id="item-list">
+        <!-- Javascript dynamically inserts nodes here -->
+      </div>
+
+      <div class="glass-card" style="margin-top: 30px; background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.05);">
+        <button id="btn-submit" class="btn-massive btn-success">
+          <i class="fa-solid fa-cloud-arrow-up"></i> 登録する
+        </button>
+        <button id="btn-retake" class="btn-massive btn-secondary">
+          <i class="fa-solid fa-rotate-left"></i> もう一度撮影する
+        </button>
+      </div>
+    </div>
+
+  </div> <!-- End Container -->
+
+  <script>
+    const cameraInput = document.getElementById('cameraInput');
+    const btnStart = document.getElementById('btn-start');
+    const cameraSection = document.getElementById('camera-section');
+    const loadingSection = document.getElementById('loading-section');
+    const resultSection = document.getElementById('result-section');
+    const itemList = document.getElementById('item-list');
+    const previewImage = document.getElementById('preview-image');
+    let extractedData = [];
+
+    // Trigger Native Camera File Input
+    btnStart.addEventListener('click', () => {
+      cameraInput.click();
+    });
+
+    cameraInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Switch UI
+      cameraSection.classList.add('hidden');
+      loadingSection.classList.remove('hidden');
+
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const base64Image = e.target.result;
+        previewImage.src = base64Image;
+
+        // Send to execution env (Google Apps Script API)
+        if(typeof google !== 'undefined' && google.script) {
+          google.script.run
+            .withSuccessHandler(onSuccess)
+            .withFailureHandler(onFailure)
+            .processImage(base64Image);
+        } else {
+          // Fallback for local testing and mocking delay
+          setTimeout(() => {
+            onSuccess([
+              { material: "ボンデ", thickness: "1.6", size: "914x1829", planned_qty: 3 },
+              { material: "SUS", thickness: "2.0", size: "1000x2000", planned_qty: 2 }
+            ]);
+          }, 2000);
+        }
+      };
+
+      reader.onerror = function() {
+        alert('画像の読み込みに失敗しました。');
+        resetApp();
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    function onSuccess(data) {
+      loadingSection.classList.add('hidden');
+      if (!data || data.length === 0) { 
+        alert('伝票の内容を読み取れませんでした。文字がはっきり写るように撮影してください。'); 
+        resetApp(); 
+        return; 
+      }
+      extractedData = data; 
+      renderItems();
+      resultSection.classList.remove('hidden'); 
+    }
+
+    function onFailure(err) { 
+      alert('画像解析に失敗しました: ' + err.message); 
+      resetApp(); 
+    }
+
+    function renderItems() {
+      itemList.innerHTML = '';
+      extractedData.forEach((item, i) => {
+        item.cancelled_qty = 0;
+        
+        const card = document.createElement('div');
+        card.className = 'glass-card item-card';
+        card.style.animationDelay = `${i * 0.15}s`;
+        
+        card.innerHTML = `
+          <div class="item-index">${i + 1}</div>
+          <div class="grid-info">
+            <div class="info-group">
+              <span class="info-label">材質</span>
+              <span class="info-value">${item.material || '-'}</span>
+            </div>
+            <div class="info-group">
+              <span class="info-label">板厚</span>
+              <span class="info-value">${item.thickness || '-'}</span>
+            </div>
+            <div class="info-group">
+              <span class="info-label">サイズ</span>
+              <span class="info-value">${item.size || '-'}</span>
+            </div>
+            <div class="info-group">
+              <span class="info-label">使用枚数</span>
+              <span class="info-value planned">${item.planned_qty || 0}</span>
+            </div>
+          </div>
+          
+          <div class="stepper-container">
+            <div class="stepper-label">キャンセル枚数</div>
+            <div class="stepper-controls">
+              <button class="btn-step" onclick="updateQty(${i}, -1)"><i class="fa-solid fa-minus"></i></button>
+              <input type="number" id="qty-${i}" class="qty-input" value="0" readonly>
+              <button class="btn-step" onclick="updateQty(${i}, 1)"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+        `;
+        itemList.appendChild(card);
+      });
+    }
+
+    window.updateQty = function(index, delta) {
+      let newVal = extractedData[index].cancelled_qty + delta;
+      
+      // Validation constraints
+      if (newVal < 0) newVal = 0;
+      if (newVal > (parseInt(extractedData[index].planned_qty) || 99)) {
+        newVal = parseInt(extractedData[index].planned_qty) || 99;
+      }
+      
+      extractedData[index].cancelled_qty = newVal;
+      document.getElementById('qty-' + index).value = newVal;
+      
+      // Haptic feedback simulation if supported
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    };
+
+    document.getElementById('btn-submit').addEventListener('click', () => {
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 登録中...';
+      
+      if(typeof google !== 'undefined' && google.script) {
+        google.script.run
+          .withSuccessHandler(() => { 
+            alert('登録が完了しました！'); 
+            resetApp(); 
+          })
+          .withFailureHandler((err) => { 
+            alert('登録に失敗しました。詳細: ' + err.message); 
+            btn.disabled = false; 
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 登録する'; 
+          })
+          .saveData(extractedData);
+      } else {
+        setTimeout(() => {
+          alert('登録が完了しました！(ローカルモック)');
+          resetApp();
+        }, 1000);
+      }
+    });
+
+    document.getElementById('btn-retake').addEventListener('click', resetApp);
+
+    function resetApp() {
+      cameraSection.classList.remove('hidden');
+      loadingSection.classList.add('hidden');
+      resultSection.classList.add('hidden');
+      
+      cameraInput.value = '';
+      extractedData = [];
+      itemList.innerHTML = '';
+      
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 登録する';
+    }
+  </script>
+</body>
+</html>
