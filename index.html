@@ -875,12 +875,15 @@
     
     function formatDateStr(str) {
       if (!str) return '';
-      if (str.includes('T') && str.endsWith('Z')) {
+      // Pattern 1: ISO String or JS Date toString() (e.g., contains 'GMT' or ends with 'Z')
+      if (str.includes('GMT') || (str.includes('T') && str.endsWith('Z'))) {
         const d = new Date(str);
         if (!isNaN(d.getTime())) {
           return `${d.getFullYear()}年 ${d.getMonth() + 1}月`;
         }
-      } else if (str.includes('/')) {
+      } 
+      // Pattern 2: "2026/04" format
+      else if (str.includes('/')) {
         const parts = str.split('/');
         if (parts.length === 2 && !isNaN(parseInt(parts[0])) && !isNaN(parseInt(parts[1]))) {
           return `${parts[0]}年 ${parseInt(parts[1], 10)}月`;
