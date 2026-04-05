@@ -1,613 +1,831 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>母材キャンセル入力</title>
-  
-  <!-- Modern Typography -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-  
-  <!-- FontAwesome Integrations -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
-      --primary: #4F46E5;
-      --primary-hover: #4338ca;
-      --secondary: #ec4899;
-      --bg: #0f172a;
-      --surface: rgba(30, 41, 59, 0.7);
-      --surface-border: rgba(255, 255, 255, 0.1);
-      --text-main: #f8fafc;
-      --text-muted: #cbd5e1;
-      --accent: #10b981;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111827;
+      --subtext: #6b7280;
+      --border: #d1d5db;
     }
-    
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: 'Inter', 'Noto Sans JP', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-      color: var(--text-main);
       margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* Animated background elements */
-    .bg-shape {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(80px);
-      z-index: -1;
-      opacity: 0.4;
-      animation: float 10s infinite ease-in-out alternate;
-    }
-    .bg-shape-1 {
-      width: 300px;
-      height: 300px;
-      background: #4F46E5;
-      top: -100px;
-      left: -100px;
-    }
-    .bg-shape-2 {
-      width: 400px;
-      height: 400px;
-      background: #ec4899;
-      bottom: -150px;
-      right: -100px;
-      animation-delay: -5s;
-    }
-
-    @keyframes float {
-      0% { transform: translateY(0) scale(1); }
-      100% { transform: translateY(30px) scale(1.1); }
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
 
     .container {
-      width: 100%;
-      max-width: 600px;
-      padding: 24px;
-      box-sizing: border-box;
-      z-index: 1;
-      padding-bottom: 50px;
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding-top: 20px;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px;
     }
 
     h1 {
-      font-size: 1.8rem;
-      font-weight: 800;
-      background: linear-gradient(to right, #a5b4fc, #f9a8d4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin: 0;
-      letter-spacing: 0.05em;
+      font-size: 28px;
+      margin: 0 0 16px;
+      text-align: center;
     }
 
-    /* Glassmorphism utility */
-    .glass-card {
-      background: var(--surface);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--surface-border);
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      transition: all 0.3s ease;
-      margin-bottom: 24px;
+    .top-nav {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
-    /* Buttons */
-    .btn-massive {
-      width: 100%;
-      padding: 18px;
-      font-size: 1.2rem;
-      font-weight: 700;
+    .nav-btn {
       border: none;
-      border-radius: 16px;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .nav-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #374151;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .desc {
+      color: var(--subtext);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      background: var(--primary);
       color: white;
-      box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
     }
 
     .btn-primary:active {
-      transform: scale(0.98);
-      box-shadow: 0 5px 15px -3px rgba(79, 70, 229, 0.4);
+      background: var(--primary-dark);
     }
 
     .btn-success {
-      background: linear-gradient(135deg, #10b981, #059669);
+      background: var(--success);
       color: white;
-      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
     }
 
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      margin-top: 12px;
-    }
-
-    .btn-secondary:active, .btn-success:active {
-      transform: scale(0.98);
-    }
-
-    /* States */
-    .status-badge {
-      display: inline-block;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      margin-bottom: 20px;
-    }
-
-    /* Extracted items card */
-    .item-card {
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 16px;
-      border: 1px solid var(--surface-border);
-      position: relative;
-      animation: slideUp 0.4s ease forwards;
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    
-    @keyframes slideUp {
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .item-index {
-      position: absolute;
-      top: -10px;
-      left: -10px;
-      background: var(--primary);
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.9rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }
-
-    .grid-info {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .info-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .info-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
-    }
-
-    .info-value {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: white;
-    }
-    
-    .info-value.planned {
-      color: #38bdf8;
-      font-size: 1.3rem;
-    }
-
-    /* Stepper component */
-    .stepper-container {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      border: 1px dashed rgba(255, 255, 255, 0.2);
-    }
-
-    .stepper-label {
-      font-size: 0.9rem;
-      color: #fca5a5;
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-
-    .stepper-controls {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      max-width: 200px;
-    }
-
-    .btn-step {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      font-size: 1.5rem;
-      font-weight: 300;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-step:active {
-      background: rgba(255, 255, 255, 0.2);
-      transform: scale(0.9);
-    }
-
-    .qty-input {
-      width: 60px;
-      background: transparent;
-      border: none;
-      color: white;
-      font-size: 2rem;
-      font-weight: 800;
-      text-align: center;
-      outline: none;
-    }
-    
-    /* Remove input spinner */
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-      -webkit-appearance: none; 
-      margin: 0; 
-    }
-
-    /* Loaders */
-    .loader {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 0;
-    }
-
-    .spinner {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: conic-gradient(#0000 10%, #4F46E5);
-      -webkit-mask: radial-gradient(farthest-side, #0000 40%, #000 80%);
-      animation: spin 1s infinite linear;
-      margin-bottom: 24px;
-    }
-
-    @keyframes spin {
-      100% { transform: rotate(1turn); }
-    }
-
-    /* Thumbnail preview */
-    .preview-container {
-      width: 100%;
-      height: 160px;
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 24px;
-      position: relative;
-      background: #000;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .preview-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.7;
-    }
-
-    .preview-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%);
+      background: #e5e7eb;
+      color: #111827;
     }
 
     .hidden {
       display: none !important;
     }
-    
-    .camera-icon-wrapper {
-      position: relative;
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 20px;
-      background: rgba(79, 70, 229, 0.2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(79, 70, 229, 0.4);
+
+    .preview {
+      width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fafafa;
+      margin-bottom: 16px;
+    }
+
+    .loader {
+      text-align: center;
+      padding: 24px 0;
+      color: var(--subtext);
+    }
+
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: #fafafa;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .label {
+      font-size: 12px;
+      color: var(--subtext);
+      margin-bottom: 4px;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      outline: none;
+      background: white;
+    }
+
+    .text-input:focus {
+      border-color: var(--primary);
+    }
+
+    .number-input {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      outline: none;
+      background: white;
+      text-align: center;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f9fafb;
+    }
+
+    .summary-group {
+      margin-bottom: 20px;
+    }
+
+    .error-box {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      white-space: pre-line;
+    }
+
+    .chart-box {
+      margin-top: 16px;
+    }
+
+    .chart-box canvas {
+      width: 100% !important;
+      max-height: 320px;
+      margin-top: 16px;
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .top-nav,
+      #refreshSummaryButton,
+      #printButton {
+        display: none !important;
+      }
+
+      #inputView {
+        display: none !important;
+      }
+
+      #summaryView {
+        display: block !important;
+      }
+
+      .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+
+      canvas {
+        max-width: 100%;
+        height: auto !important;
+        page-break-inside: avoid;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="bg-shape bg-shape-1"></div>
-  <div class="bg-shape bg-shape-2"></div>
-
   <div class="container">
-    <header>
-      <h1>母材キャンセル入力</h1>
-    </header>
+    <h1>母材キャンセル入力</h1>
 
-    <!-- UI State 1: Upload / Camera -->
-    <div id="camera-section" class="glass-card text-center text-center">
-      <div class="status-badge">
-        <i class="fa-solid fa-circle-info"></i> 状態: 待機中
+    <div class="top-nav">
+      <button id="navInput" class="nav-btn active">入力</button>
+      <button id="navSummary" class="nav-btn">集計</button>
+    </div>
+
+    <!-- 入力画面 -->
+    <div id="inputView">
+      <div class="card">
+        <div class="label">送信者名</div>
+        <input id="senderName" class="text-input" type="text" placeholder="名前を入力してください">
       </div>
-      
-      <div style="padding: 20px 0;">
-        <div class="camera-icon-wrapper">
-          <i class="fa-solid fa-camera" style="font-size: 2.5rem; color: #a5b4fc;"></i>
+
+      <div id="cameraSection" class="card">
+        <div class="status">状態: 待機中</div>
+        <div class="desc">
+          伝票を撮影してください。<br>
+          AIが客先・母材情報を読み取り、必要ならその場で修正できます。
         </div>
-        <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 30px; font-weight: 500;">
-          伝票を撮影してください。<br>AIが記載されている母材情報を自動で読み取ります。
-        </p>
-        
-        <!-- capture="environment" to use mobile rear camera -->
-        <input type="file" accept="image/*" capture="environment" id="cameraInput" class="hidden">
-        
-        <button id="btn-start" class="btn-massive btn-primary">
-          <i class="fa-solid fa-camera"></i> カメラを起動して撮影
-        </button>
-      </div>
-    </div>
 
-    <!-- UI State 2: Processing -->
-    <div id="loading-section" class="glass-card hidden text-center">
-      <div class="status-badge" style="background: rgba(56, 189, 248, 0.2); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
-        <i class="fa-solid fa-microchip fa-fade"></i> 状態: 解析中...
-      </div>
-      
-      <div class="preview-container">
-        <img id="preview-image" src="" alt="Captured Image">
-        <div class="preview-overlay"></div>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+        <button id="startButton" class="btn btn-primary">カメラを起動して撮影</button>
       </div>
 
-      <div class="loader">
-        <div class="spinner"></div>
-        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600;">AIが伝票を解析中</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 8px;">しばらくお待ちください（数秒かかります）</p>
+      <div id="loadingSection" class="card hidden">
+        <div class="status">状態: 解析中</div>
+        <img id="previewImage" class="preview" src="" alt="preview">
+        <div class="loader">画像を解析しています…</div>
       </div>
-    </div>
 
-    <!-- UI State 3: Results & Input -->
-    <div id="result-section" class="hidden">
-      <div class="text-center">
-        <div class="status-badge" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
-          <i class="fa-solid fa-check"></i> 状態: 解析完了
+      <div id="resultSection" class="hidden">
+        <div id="errorBox" class="error-box hidden"></div>
+
+        <div class="card">
+          <div class="status">状態: 解析完了</div>
+          <div class="section-title">読み取り結果（修正可）</div>
+          <div id="itemList"></div>
+          <button id="submitButton" class="btn btn-success">登録する</button>
+          <button id="retakeButton" class="btn btn-secondary">もう一度撮影する</button>
         </div>
       </div>
-
-      <div id="item-list">
-        <!-- Javascript dynamically inserts nodes here -->
-      </div>
-
-      <div class="glass-card" style="margin-top: 30px; background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.05);">
-        <button id="btn-submit" class="btn-massive btn-success">
-          <i class="fa-solid fa-cloud-arrow-up"></i> 登録する
-        </button>
-        <button id="btn-retake" class="btn-massive btn-secondary">
-          <i class="fa-solid fa-rotate-left"></i> もう一度撮影する
-        </button>
-      </div>
     </div>
 
-  </div> <!-- End Container -->
+    <!-- 集計画面 -->
+    <div id="summaryView" class="hidden">
+      <div class="card">
+        <div class="section-title">集計</div>
+        <button id="refreshSummaryButton" class="btn btn-primary">集計を更新</button>
+        <button id="printButton" class="btn btn-secondary">印刷 / PDF</button>
+      </div>
+
+      <div class="card summary-group">
+        <div class="section-title">月別集計</div>
+        <div id="monthlyTable"></div>
+      </div>
+
+      <div class="card summary-group">
+        <div class="section-title">材料別集計</div>
+        <div id="materialTable"></div>
+      </div>
+
+      <div class="card summary-group">
+        <div class="section-title">客先別集計</div>
+        <div id="customerTable"></div>
+      </div>
+
+      <div class="card chart-box">
+        <div class="section-title">グラフ</div>
+        <canvas id="monthlyChart"></canvas>
+        <canvas id="materialChart"></canvas>
+        <canvas id="customerChart"></canvas>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const cameraInput = document.getElementById('cameraInput');
-    const btnStart = document.getElementById('btn-start');
-    const cameraSection = document.getElementById('camera-section');
-    const loadingSection = document.getElementById('loading-section');
-    const resultSection = document.getElementById('result-section');
-    const itemList = document.getElementById('item-list');
-    const previewImage = document.getElementById('preview-image');
-    let extractedData = [];
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzZF60-ugcHbOulim5xQdMRFhiNwTW5yw2UDq3uS7SjCDqVevWqHQfFeeKfM_irEbEA/exec";
 
-    // Trigger Native Camera File Input
-    btnStart.addEventListener('click', () => {
+    const navInput = document.getElementById('navInput');
+    const navSummary = document.getElementById('navSummary');
+    const inputView = document.getElementById('inputView');
+    const summaryView = document.getElementById('summaryView');
+
+    const cameraInput = document.getElementById('cameraInput');
+    const startButton = document.getElementById('startButton');
+    const submitButton = document.getElementById('submitButton');
+    const retakeButton = document.getElementById('retakeButton');
+    const refreshSummaryButton = document.getElementById('refreshSummaryButton');
+    const printButton = document.getElementById('printButton');
+    const senderNameInput = document.getElementById('senderName');
+
+    const cameraSection = document.getElementById('cameraSection');
+    const loadingSection = document.getElementById('loadingSection');
+    const resultSection = document.getElementById('resultSection');
+
+    const previewImage = document.getElementById('previewImage');
+    const itemList = document.getElementById('itemList');
+    const errorBox = document.getElementById('errorBox');
+
+    const monthlyTable = document.getElementById('monthlyTable');
+    const materialTable = document.getElementById('materialTable');
+    const customerTable = document.getElementById('customerTable');
+
+    let extractedData = [];
+    let monthlyChart = null;
+    let materialChart = null;
+    let customerChart = null;
+
+    window.addEventListener('load', () => {
+      const savedSender = localStorage.getItem('material_cancel_sender_name');
+      if (savedSender) senderNameInput.value = savedSender;
+    });
+
+    senderNameInput.addEventListener('input', () => {
+      localStorage.setItem('material_cancel_sender_name', senderNameInput.value.trim());
+    });
+
+    navInput.addEventListener('click', () => {
+      showInputView();
+    });
+
+    navSummary.addEventListener('click', async () => {
+      showSummaryView();
+      await loadSummary();
+    });
+
+    function showInputView() {
+      inputView.classList.remove('hidden');
+      summaryView.classList.add('hidden');
+      navInput.classList.add('active');
+      navSummary.classList.remove('active');
+    }
+
+    function showSummaryView() {
+      inputView.classList.add('hidden');
+      summaryView.classList.remove('hidden');
+      navInput.classList.remove('active');
+      navSummary.classList.add('active');
+    }
+
+    startButton.addEventListener('click', () => {
       cameraInput.click();
     });
 
-    cameraInput.addEventListener('change', (event) => {
+    cameraInput.addEventListener('change', async (event) => {
       const file = event.target.files[0];
       if (!file) return;
 
-      // Switch UI
-      cameraSection.classList.add('hidden');
-      loadingSection.classList.remove('hidden');
-
       const reader = new FileReader();
 
-      reader.onload = function(e) {
+      reader.onload = async function(e) {
         const base64Image = e.target.result;
         previewImage.src = base64Image;
 
-        // Send to execution env (Google Apps Script API)
-        if(typeof google !== 'undefined' && google.script) {
-          google.script.run
-            .withSuccessHandler(onSuccess)
-            .withFailureHandler(onFailure)
-            .processImage(base64Image);
-        } else {
-          // Fallback for local testing and mocking delay
-          setTimeout(() => {
-            onSuccess([
-              { material: "ボンデ", thickness: "1.6", size: "914x1829", planned_qty: 3 },
-              { material: "SUS", thickness: "2.0", size: "1000x2000", planned_qty: 2 }
-            ]);
-          }, 2000);
+        cameraSection.classList.add('hidden');
+        loadingSection.classList.remove('hidden');
+        resultSection.classList.add('hidden');
+        errorBox.classList.add('hidden');
+        errorBox.textContent = '';
+
+        try {
+          const response = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8'
+            },
+            body: JSON.stringify({
+              action: 'analyze',
+              image: base64Image
+            })
+          });
+
+          const data = await response.json();
+
+          if (!data.ok) {
+            throw new Error(data.error || '解析に失敗しました');
+          }
+
+          onAnalyzeSuccess(data.items);
+        } catch (err) {
+          alert('画像解析に失敗しました: ' + err.message);
+          resetApp(false);
         }
       };
 
       reader.onerror = function() {
         alert('画像の読み込みに失敗しました。');
-        resetApp();
+        resetApp(false);
       };
 
       reader.readAsDataURL(file);
     });
 
-    function onSuccess(data) {
+    function onAnalyzeSuccess(data) {
       loadingSection.classList.add('hidden');
-      if (!data || data.length === 0) { 
-        alert('伝票の内容を読み取れませんでした。文字がはっきり写るように撮影してください。'); 
-        resetApp(); 
-        return; 
-      }
-      extractedData = data; 
-      renderItems();
-      resultSection.classList.remove('hidden'); 
-    }
 
-    function onFailure(err) { 
-      alert('画像解析に失敗しました: ' + err.message); 
-      resetApp(); 
+      if (!Array.isArray(data) || data.length === 0) {
+        alert("読み取り結果がありませんでした。撮り直してください。");
+        resetApp(false);
+        return;
+      }
+
+      extractedData = data.map(item => ({
+        customer: item.customer || "",
+        material: item.material || "",
+        thickness: item.thickness || "",
+        size: item.size || "",
+        planned_qty: Number(item.planned_qty || 0),
+        cancelled_qty: Number(item.cancelled_qty || 0)
+      }));
+
+      renderItems();
+      resultSection.classList.remove('hidden');
     }
 
     function renderItems() {
-      itemList.innerHTML = '';
-      extractedData.forEach((item, i) => {
-        item.cancelled_qty = 0;
-        
-        const card = document.createElement('div');
-        card.className = 'glass-card item-card';
-        card.style.animationDelay = `${i * 0.15}s`;
-        
-        card.innerHTML = `
-          <div class="item-index">${i + 1}</div>
-          <div class="grid-info">
-            <div class="info-group">
-              <span class="info-label">材質</span>
-              <span class="info-value">${item.material || '-'}</span>
+      itemList.innerHTML = "";
+
+      extractedData.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+
+        div.innerHTML = `
+          <div class="row">
+            <div>
+              <div class="label">客先</div>
+              <input class="text-input" type="text" value="${escapeAttr(item.customer)}"
+                oninput="updateField(${index}, 'customer', this.value)">
             </div>
-            <div class="info-group">
-              <span class="info-label">板厚</span>
-              <span class="info-value">${item.thickness || '-'}</span>
-            </div>
-            <div class="info-group">
-              <span class="info-label">サイズ</span>
-              <span class="info-value">${item.size || '-'}</span>
-            </div>
-            <div class="info-group">
-              <span class="info-label">使用枚数</span>
-              <span class="info-value planned">${item.planned_qty || 0}</span>
+            <div>
+              <div class="label">材質</div>
+              <input class="text-input" type="text" value="${escapeAttr(item.material)}"
+                oninput="updateField(${index}, 'material', this.value)">
             </div>
           </div>
-          
-          <div class="stepper-container">
-            <div class="stepper-label">キャンセル枚数</div>
-            <div class="stepper-controls">
-              <button class="btn-step" onclick="updateQty(${i}, -1)"><i class="fa-solid fa-minus"></i></button>
-              <input type="number" id="qty-${i}" class="qty-input" value="0" readonly>
-              <button class="btn-step" onclick="updateQty(${i}, 1)"><i class="fa-solid fa-plus"></i></button>
+
+          <div class="row">
+            <div>
+              <div class="label">板厚</div>
+              <input class="text-input" type="text" value="${escapeAttr(String(item.thickness))}"
+                oninput="updateField(${index}, 'thickness', this.value)">
+            </div>
+            <div>
+              <div class="label">サイズ</div>
+              <input class="text-input" type="text" value="${escapeAttr(item.size)}"
+                oninput="updateField(${index}, 'size', this.value)">
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">使用枚数</div>
+              <input class="number-input" type="number" min="0" value="${item.planned_qty}"
+                oninput="updateNumberField(${index}, 'planned_qty', this.value)">
+            </div>
+            <div>
+              <div class="label">キャンセル枚数</div>
+              <input class="number-input" type="number" min="0" value="${item.cancelled_qty}"
+                oninput="updateNumberField(${index}, 'cancelled_qty', this.value)">
             </div>
           </div>
         `;
-        itemList.appendChild(card);
+
+        itemList.appendChild(div);
       });
     }
 
-    window.updateQty = function(index, delta) {
-      let newVal = extractedData[index].cancelled_qty + delta;
-      
-      // Validation constraints
-      if (newVal < 0) newVal = 0;
-      if (newVal > (parseInt(extractedData[index].planned_qty) || 99)) {
-        newVal = parseInt(extractedData[index].planned_qty) || 99;
-      }
-      
-      extractedData[index].cancelled_qty = newVal;
-      document.getElementById('qty-' + index).value = newVal;
-      
-      // Haptic feedback simulation if supported
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
+    window.updateField = function(index, field, value) {
+      extractedData[index][field] = value;
     };
 
-    document.getElementById('btn-submit').addEventListener('click', () => {
-      const btn = document.getElementById('btn-submit');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 登録中...';
-      
-      if(typeof google !== 'undefined' && google.script) {
-        google.script.run
-          .withSuccessHandler(() => { 
-            alert('登録が完了しました！'); 
-            resetApp(); 
+    window.updateNumberField = function(index, field, value) {
+      let num = parseInt(value, 10);
+      if (isNaN(num) || num < 0) num = 0;
+
+      if (field === 'cancelled_qty') {
+        const planned = parseInt(extractedData[index].planned_qty, 10) || 0;
+        if (num > planned) num = planned;
+      }
+
+      extractedData[index][field] = num;
+    };
+
+    submitButton.addEventListener('click', async () => {
+      const senderName = senderNameInput.value.trim();
+      const errors = validateBeforeSubmit(senderName, extractedData);
+
+      if (errors.length > 0) {
+        errorBox.textContent = errors.join('\n');
+        errorBox.classList.remove('hidden');
+        return;
+      }
+
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+
+      try {
+        localStorage.setItem('material_cancel_sender_name', senderName);
+
+        submitButton.disabled = true;
+        submitButton.textContent = '登録中...';
+
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify({
+            action: 'save',
+            sender: senderName,
+            list: extractedData
           })
-          .withFailureHandler((err) => { 
-            alert('登録に失敗しました。詳細: ' + err.message); 
-            btn.disabled = false; 
-            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 登録する'; 
-          })
-          .saveData(extractedData);
-      } else {
-        setTimeout(() => {
-          alert('登録が完了しました！(ローカルモック)');
-          resetApp();
-        }, 1000);
+        });
+
+        const data = await response.json();
+
+        if (!data.ok) {
+          throw new Error(data.error || '登録に失敗しました');
+        }
+
+        alert('登録が完了しました');
+        resetApp(false);
+      } catch (err) {
+        alert('登録に失敗しました: ' + err.message);
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = '登録する';
       }
     });
 
-    document.getElementById('btn-retake').addEventListener('click', resetApp);
+    function validateBeforeSubmit(senderName, list) {
+      const errors = [];
 
-    function resetApp() {
+      if (!senderName) {
+        errors.push('送信者名を入力してください。');
+      }
+
+      if (!Array.isArray(list) || list.length === 0) {
+        errors.push('登録するデータがありません。');
+        return errors;
+      }
+
+      list.forEach((item, i) => {
+        const line = i + 1;
+
+        if (!String(item.customer || '').trim()) {
+          errors.push(`${line}行目: 客先が未入力です。`);
+        }
+        if (!String(item.material || '').trim()) {
+          errors.push(`${line}行目: 材質が未入力です。`);
+        }
+        if (!String(item.thickness || '').trim()) {
+          errors.push(`${line}行目: 板厚が未入力です。`);
+        }
+        if (!String(item.size || '').trim()) {
+          errors.push(`${line}行目: サイズが未入力です。`);
+        }
+
+        const planned = Number(item.planned_qty || 0);
+        const cancelled = Number(item.cancelled_qty || 0);
+
+        if (planned <= 0) {
+          errors.push(`${line}行目: 使用枚数は1以上にしてください。`);
+        }
+        if (cancelled < 0) {
+          errors.push(`${line}行目: キャンセル枚数は0以上にしてください。`);
+        }
+        if (cancelled > planned) {
+          errors.push(`${line}行目: キャンセル枚数が使用枚数を超えています。`);
+        }
+      });
+
+      return errors;
+    }
+
+    retakeButton.addEventListener('click', () => resetApp(false));
+
+    function resetApp(resetSender = false) {
+      extractedData = [];
+      itemList.innerHTML = '';
+      cameraInput.value = '';
+      previewImage.src = '';
+
       cameraSection.classList.remove('hidden');
       loadingSection.classList.add('hidden');
       resultSection.classList.add('hidden');
-      
-      cameraInput.value = '';
-      extractedData = [];
-      itemList.innerHTML = '';
-      
-      const btn = document.getElementById('btn-submit');
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 登録する';
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+
+      if (resetSender) {
+        senderNameInput.value = '';
+        localStorage.removeItem('material_cancel_sender_name');
+      }
+    }
+
+    refreshSummaryButton.addEventListener('click', loadSummary);
+
+    async function loadSummary() {
+      monthlyTable.innerHTML = '読み込み中...';
+      materialTable.innerHTML = '読み込み中...';
+      customerTable.innerHTML = '読み込み中...';
+
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify({
+            action: 'summary'
+          })
+        });
+
+        const data = await response.json();
+
+        if (!data.ok) {
+          throw new Error(data.error || '集計取得に失敗しました');
+        }
+
+        renderSummaryTable(monthlyTable, data.summary.monthly);
+        renderSummaryTable(materialTable, data.summary.material);
+        renderSummaryTable(customerTable, data.summary.customer);
+        drawCharts(data.summary);
+      } catch (err) {
+        monthlyTable.innerHTML = '取得失敗: ' + escapeHtml(err.message);
+        materialTable.innerHTML = '取得失敗: ' + escapeHtml(err.message);
+        customerTable.innerHTML = '取得失敗: ' + escapeHtml(err.message);
+      }
+    }
+
+    function renderSummaryTable(container, rows) {
+      if (!rows || rows.length === 0) {
+        container.innerHTML = 'データがありません。';
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+
+      let html = '<table><thead><tr>';
+      headers.forEach(h => {
+        html += `<th>${escapeHtml(h)}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+
+      rows.forEach(row => {
+        html += '<tr>';
+        headers.forEach(h => {
+          html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function drawCharts(summary) {
+      drawMonthlyChart(summary.monthly || []);
+      drawMaterialChart(summary.material || []);
+      drawCustomerChart(summary.customer || []);
+    }
+
+    function drawMonthlyChart(data) {
+      const ctx = document.getElementById('monthlyChart');
+
+      if (monthlyChart) monthlyChart.destroy();
+
+      const labels = data.map(d => d['月']);
+      const values = data.map(d => Number(d['キャンセル合計枚数'] || 0));
+
+      monthlyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'キャンセル枚数',
+            data: values
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true }
+          }
+        }
+      });
+    }
+
+    function drawMaterialChart(data) {
+      const ctx = document.getElementById('materialChart');
+
+      if (materialChart) materialChart.destroy();
+
+      const labels = data.map(d => d['材料']);
+      const values = data.map(d => Number(d['キャンセル合計枚数'] || 0));
+
+      materialChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'キャンセル枚数',
+            data: values
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true }
+          }
+        }
+      });
+    }
+
+    function drawCustomerChart(data) {
+      const ctx = document.getElementById('customerChart');
+
+      if (customerChart) customerChart.destroy();
+
+      const labels = data.map(d => d['客先']);
+      const values = data.map(d => Number(d['キャンセル合計枚数'] || 0));
+
+      customerChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'キャンセル枚数',
+            data: values
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true }
+          }
+        }
+      });
+    }
+
+    printButton.addEventListener('click', () => {
+      window.print();
+    });
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeAttr(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
     }
   </script>
 </body>
