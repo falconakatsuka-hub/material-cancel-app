@@ -313,6 +313,12 @@
     <div id="summaryView" class="hidden">
       <div class="card">
         <div class="section-title">集計</div>
+        <div style="margin-bottom: 12px;">
+          <label class="label">月別フィルター (客先別・材料別の集計に反映されます)</label>
+          <select id="monthFilter" class="text-input">
+            <option value="ALL">すべて表示</option>
+          </select>
+        </div>
         <button id="refreshSummaryButton" class="btn btn-primary">集計を更新</button>
         <button id="printButton" class="btn btn-secondary">印刷 / PDF</button>
       </div>
@@ -370,9 +376,17 @@
     const customerTable = document.getElementById('customerTable');
 
     let extractedData = [];
+    let rawSummaryData = [];
     let monthlyChart = null;
     let materialChart = null;
     let customerChart = null;
+    
+    const monthFilter = document.getElementById('monthFilter');
+    monthFilter.addEventListener('change', () => {
+      if (rawSummaryData && rawSummaryData.length > 0) {
+        applySummaryFilter();
+      }
+    });
 
     window.addEventListener('load', () => {
       const savedSender = localStorage.getItem('material_cancel_sender_name');
@@ -671,29 +685,84 @@
       try {
         const response = await fetch(GAS_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-          },
-          body: JSON.stringify({
-            action: 'summary'
-          })
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'summary' })
         });
 
         const data = await response.json();
+        if (!data.ok) throw new Error(data.error || '集計取得に失敗しました');
 
-        if (!data.ok) {
-          throw new Error(data.error || '集計取得に失敗しました');
+        rawSummaryData = data.summary.raw || [];
+        
+        // Populate month dropdown avoiding duplicates
+        const uniqueMonths = [...new Set(rawSummaryData.map(r => r['月']).filter(Boolean))].sort();
+        const currentSelection = monthFilter.value;
+        monthFilter.innerHTML = '<option value="ALL">すべて表示</option>';
+        uniqueMonths.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          monthFilter.appendChild(opt);
+        });
+        if (uniqueMonths.includes(currentSelection)) {
+          monthFilter.value = currentSelection;
         }
 
+        // The trend is always "all data"
         renderSummaryTable(monthlyTable, data.summary.monthly);
-        renderSummaryTable(materialTable, data.summary.material);
-        renderSummaryTable(customerTable, data.summary.customer);
-        drawCharts(data.summary);
+        drawMonthlyChart(data.summary.monthly || []);
+
+        applySummaryFilter();
       } catch (err) {
         monthlyTable.innerHTML = '取得失敗: ' + escapeHtml(err.message);
         materialTable.innerHTML = '取得失敗: ' + escapeHtml(err.message);
         customerTable.innerHTML = '取得失敗: ' + escapeHtml(err.message);
       }
+    }
+    
+    function applySummaryFilter() {
+      const selectedMonth = monthFilter.value;
+      const filtered = selectedMonth === 'ALL' 
+        ? rawSummaryData 
+        : rawSummaryData.filter(r => r['月'] === selectedMonth);
+
+      const materialMap = {};
+      const customerMap = {};
+
+      filtered.forEach(row => {
+        const material = String(row['材質'] || '');
+        const thickness = String(row['板厚'] || '');
+        const size = String(row['サイズ'] || '');
+        const cancelled = Number(row['キャンセル枚数']) || 0;
+        const customer = String(row['客先'] || '');
+
+        const materialKey = [material, thickness, size].join(' / ');
+
+        if (!materialMap[materialKey]) materialMap[materialKey] = { count: 0, cancelled: 0 };
+        materialMap[materialKey].count += 1;
+        materialMap[materialKey].cancelled += cancelled;
+
+        if (!customerMap[customer]) customerMap[customer] = { count: 0, cancelled: 0 };
+        customerMap[customer].count += 1;
+        customerMap[customer].cancelled += cancelled;
+      });
+
+      const buildRows = (mapObj, keyName) => {
+        return Object.keys(mapObj).sort().map(k => ({
+          [keyName]: k,
+          '登録件数': mapObj[k].count,
+          'キャンセル合計枚数': mapObj[k].cancelled
+        }));
+      };
+
+      const materialData = buildRows(materialMap, '材料');
+      const customerData = buildRows(customerMap, '客先');
+
+      renderSummaryTable(materialTable, materialData);
+      renderSummaryTable(customerTable, customerData);
+
+      drawMaterialChart(materialData);
+      drawCustomerChart(customerData);
     }
 
     function renderSummaryTable(container, rows) {
@@ -701,108 +770,67 @@
         container.innerHTML = 'データがありません。';
         return;
       }
-
       const headers = Object.keys(rows[0]);
-
       let html = '<table><thead><tr>';
-      headers.forEach(h => {
-        html += `<th>${escapeHtml(h)}</th>`;
-      });
+      headers.forEach(h => html += `<th>${escapeHtml(h)}</th>`);
       html += '</tr></thead><tbody>';
-
       rows.forEach(row => {
         html += '<tr>';
-        headers.forEach(h => {
-          html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`;
-        });
+        headers.forEach(h => html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`);
         html += '</tr>';
       });
-
       html += '</tbody></table>';
       container.innerHTML = html;
     }
 
-    function drawCharts(summary) {
-      drawMonthlyChart(summary.monthly || []);
-      drawMaterialChart(summary.material || []);
-      drawCustomerChart(summary.customer || []);
-    }
-
     function drawMonthlyChart(data) {
       const ctx = document.getElementById('monthlyChart');
-
       if (monthlyChart) monthlyChart.destroy();
-
-      const labels = data.map(d => d['月']);
-      const values = data.map(d => Number(d['キャンセル合計枚数'] || 0));
-
       monthlyChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels,
+          labels: data.map(d => d['月']),
           datasets: [{
             label: 'キャンセル枚数',
-            data: values
+            data: data.map(d => Number(d['キャンセル合計枚数'] || 0)),
+            backgroundColor: 'rgba(37, 99, 235, 0.7)'
           }]
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: true }
-          }
-        }
+        options: { responsive: true }
       });
     }
 
     function drawMaterialChart(data) {
       const ctx = document.getElementById('materialChart');
-
       if (materialChart) materialChart.destroy();
-
-      const labels = data.map(d => d['材料']);
-      const values = data.map(d => Number(d['キャンセル合計枚数'] || 0));
-
       materialChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'pie',
         data: {
-          labels,
+          labels: data.map(d => d['材料']),
           datasets: [{
             label: 'キャンセル枚数',
-            data: values
+            data: data.map(d => Number(d['キャンセル合計枚数'] || 0)),
+            hoverOffset: 4
           }]
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: true }
-          }
-        }
+        options: { responsive: true }
       });
     }
 
     function drawCustomerChart(data) {
       const ctx = document.getElementById('customerChart');
-
       if (customerChart) customerChart.destroy();
-
-      const labels = data.map(d => d['客先']);
-      const values = data.map(d => Number(d['キャンセル合計枚数'] || 0));
-
       customerChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'pie',
         data: {
-          labels,
+          labels: data.map(d => d['客先']),
           datasets: [{
             label: 'キャンセル枚数',
-            data: values
+            data: data.map(d => Number(d['キャンセル合計枚数'] || 0)),
+            hoverOffset: 4
           }]
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: true }
-          }
-        }
+        options: { responsive: true }
       });
     }
 

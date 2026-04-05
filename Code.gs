@@ -444,11 +444,13 @@ function getSummaryData() {
   const monthlySheet = getOrCreateSheet_(ss, CONFIG.MONTHLY_SUMMARY_SHEET);
   const materialSheet = getOrCreateSheet_(ss, CONFIG.MATERIAL_SUMMARY_SHEET);
   const customerSheet = getOrCreateSheet_(ss, CONFIG.CUSTOMER_SUMMARY_SHEET);
+  const rawSheet = getOrCreateSheet_(ss, CONFIG.SHEET_NAME);
 
   return {
     monthly: sheetToObjects_(monthlySheet),
     material: sheetToObjects_(materialSheet),
-    customer: sheetToObjects_(customerSheet)
+    customer: sheetToObjects_(customerSheet),
+    raw: sheetToObjects_(rawSheet)
   };
 }
 
