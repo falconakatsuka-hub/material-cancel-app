@@ -702,11 +702,20 @@
           const opt = document.createElement('option');
           opt.value = m;
           
-          // 2026/04  등을 2026年 4月 へマイルドに変換
-          const parts = m.split('/');
           let displayLabel = m;
-          if (parts.length === 2) {
-            displayLabel = `${parts[0]}年 ${parseInt(parts[1], 10)}月`;
+
+          if (m.includes('T') && m.endsWith('Z')) {
+            // ISO Date string provided by Google Sheets serialization
+            const dateObj = new Date(m);
+            if (!isNaN(dateObj.getTime())) {
+              displayLabel = `${dateObj.getFullYear()}年 ${dateObj.getMonth() + 1}月`;
+            }
+          } else if (m.includes('/')) {
+            // Raw 2026/04 format
+            const parts = m.split('/');
+            if (parts.length >= 2) {
+              displayLabel = `${parts[0]}年 ${parseInt(parts[1], 10)}月`;
+            }
           }
           
           opt.textContent = displayLabel;
@@ -784,7 +793,7 @@
       html += '</tr></thead><tbody>';
       rows.forEach(row => {
         html += '<tr>';
-        headers.forEach(h => html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`);
+        headers.forEach(h => html += `<td>${escapeHtml(formatDateStr(String(row[h] ?? '')))}</td>`);
         html += '</tr>';
       });
       html += '</tbody></table>';
@@ -797,7 +806,7 @@
       monthlyChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: data.map(d => d['月']),
+          labels: data.map(d => formatDateStr(String(d['月'] || ''))),
           datasets: [{
             label: 'キャンセル枚数',
             data: data.map(d => Number(d['キャンセル合計枚数'] || 0)),
@@ -862,6 +871,22 @@
         .replace(/'/g, '&#039;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
+    }
+    
+    function formatDateStr(str) {
+      if (!str) return '';
+      if (str.includes('T') && str.endsWith('Z')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+          return `${d.getFullYear()}年 ${d.getMonth() + 1}月`;
+        }
+      } else if (str.includes('/')) {
+        const parts = str.split('/');
+        if (parts.length === 2 && !isNaN(parseInt(parts[0])) && !isNaN(parseInt(parts[1]))) {
+          return `${parts[0]}年 ${parseInt(parts[1], 10)}月`;
+        }
+      }
+      return str;
     }
   </script>
 </body>
