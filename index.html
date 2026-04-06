@@ -272,7 +272,6 @@
       <button id="navSummary" class="nav-btn">集計</button>
     </div>
 
-    <!-- 入力画面 -->
     <div id="inputView">
       <div class="card">
         <div class="label">送信者名</div>
@@ -309,7 +308,6 @@
       </div>
     </div>
 
-    <!-- 集計画面 -->
     <div id="summaryView" class="hidden">
       <div class="card">
         <div class="section-title">集計</div>
@@ -380,7 +378,7 @@
     let monthlyChart = null;
     let materialChart = null;
     let customerChart = null;
-    
+
     const monthFilter = document.getElementById('monthFilter');
     monthFilter.addEventListener('change', () => {
       if (rawSummaryData && rawSummaryData.length > 0) {
@@ -600,7 +598,12 @@
           throw new Error(data.error || '登録に失敗しました');
         }
 
-        alert('登録が完了しました');
+        if (data.savedRows === 0) {
+          alert(data.message || 'キャンセル枚数が1以上の行がなかったため、保存はありませんでした');
+        } else {
+          alert(data.message || '登録が完了しました');
+        }
+
         resetApp(false);
       } catch (err) {
         alert('登録に失敗しました: ' + err.message);
@@ -693,39 +696,22 @@
         if (!data.ok) throw new Error(data.error || '集計取得に失敗しました');
 
         rawSummaryData = data.summary.raw || [];
-        
-        // Populate month dropdown avoiding duplicates
+
         const uniqueMonths = [...new Set(rawSummaryData.map(r => r['月']).filter(Boolean))].sort();
         const currentSelection = monthFilter.value;
         monthFilter.innerHTML = '<option value="ALL">すべて表示</option>';
+
         uniqueMonths.forEach(m => {
           const opt = document.createElement('option');
           opt.value = m;
-          
-          let displayLabel = m;
-
-          if (m.includes('T') && m.endsWith('Z')) {
-            // ISO Date string provided by Google Sheets serialization
-            const dateObj = new Date(m);
-            if (!isNaN(dateObj.getTime())) {
-              displayLabel = `${dateObj.getFullYear()}年 ${dateObj.getMonth() + 1}月`;
-            }
-          } else if (m.includes('/')) {
-            // Raw 2026/04 format
-            const parts = m.split('/');
-            if (parts.length >= 2) {
-              displayLabel = `${parts[0]}年 ${parseInt(parts[1], 10)}月`;
-            }
-          }
-          
-          opt.textContent = displayLabel;
+          opt.textContent = m;
           monthFilter.appendChild(opt);
         });
+
         if (uniqueMonths.includes(currentSelection)) {
           monthFilter.value = currentSelection;
         }
 
-        // The trend is always "all data"
         renderSummaryTable(monthlyTable, data.summary.monthly);
         drawMonthlyChart(data.summary.monthly || []);
 
@@ -736,11 +722,11 @@
         customerTable.innerHTML = '取得失敗: ' + escapeHtml(err.message);
       }
     }
-    
+
     function applySummaryFilter() {
       const selectedMonth = monthFilter.value;
-      const filtered = selectedMonth === 'ALL' 
-        ? rawSummaryData 
+      const filtered = selectedMonth === 'ALL'
+        ? rawSummaryData
         : rawSummaryData.filter(r => r['月'] === selectedMonth);
 
       const materialMap = {};
@@ -787,15 +773,18 @@
         container.innerHTML = 'データがありません。';
         return;
       }
+
       const headers = Object.keys(rows[0]);
       let html = '<table><thead><tr>';
       headers.forEach(h => html += `<th>${escapeHtml(h)}</th>`);
       html += '</tr></thead><tbody>';
+
       rows.forEach(row => {
         html += '<tr>';
-        headers.forEach(h => html += `<td>${escapeHtml(formatDateStr(String(row[h] ?? '')))}</td>`);
+        headers.forEach(h => html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`);
         html += '</tr>';
       });
+
       html += '</tbody></table>';
       container.innerHTML = html;
     }
@@ -803,10 +792,11 @@
     function drawMonthlyChart(data) {
       const ctx = document.getElementById('monthlyChart');
       if (monthlyChart) monthlyChart.destroy();
+
       monthlyChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: data.map(d => formatDateStr(String(d['月'] || ''))),
+          labels: data.map(d => d['月']),
           datasets: [{
             label: 'キャンセル枚数',
             data: data.map(d => Number(d['キャンセル合計枚数'] || 0)),
@@ -820,6 +810,7 @@
     function drawMaterialChart(data) {
       const ctx = document.getElementById('materialChart');
       if (materialChart) materialChart.destroy();
+
       materialChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -837,6 +828,7 @@
     function drawCustomerChart(data) {
       const ctx = document.getElementById('customerChart');
       if (customerChart) customerChart.destroy();
+
       customerChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -871,25 +863,6 @@
         .replace(/'/g, '&#039;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
-    }
-    
-    function formatDateStr(str) {
-      if (!str) return '';
-      // Pattern 1: ISO String or JS Date toString() (e.g., contains 'GMT' or ends with 'Z')
-      if (str.includes('GMT') || (str.includes('T') && str.endsWith('Z'))) {
-        const d = new Date(str);
-        if (!isNaN(d.getTime())) {
-          return `${d.getFullYear()}年 ${d.getMonth() + 1}月`;
-        }
-      } 
-      // Pattern 2: "2026/04" format
-      else if (str.includes('/')) {
-        const parts = str.split('/');
-        if (parts.length === 2 && !isNaN(parseInt(parts[0])) && !isNaN(parseInt(parts[1]))) {
-          return `${parts[0]}年 ${parseInt(parts[1], 10)}月`;
-        }
-      }
-      return str;
     }
   </script>
 </body>
