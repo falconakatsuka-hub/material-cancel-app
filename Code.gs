@@ -42,7 +42,19 @@ function doPost(e) {
       const saved = saveData(list, sender);
       updateSummarySheets_();
 
-      return jsonOutput({ ok: true, savedRows: saved });
+      if (saved === 0) {
+        return jsonOutput({
+          ok: true,
+          savedRows: 0,
+          message: 'キャンセル枚数が1以上の行がなかったため、保存はありませんでした'
+        });
+      }
+
+      return jsonOutput({
+        ok: true,
+        savedRows: saved,
+        message: saved + '件保存しました'
+      });
     }
 
     if (action === 'summary') {
@@ -235,6 +247,9 @@ function saveData(list, sender) {
     })
     .filter(function(item) {
       return item.customer || item.material || item.thickness || item.size || item.planned_qty;
+    })
+    .filter(function(item) {
+      return item.cancelled_qty > 0;
     })
     .map(function(item) {
       return [
