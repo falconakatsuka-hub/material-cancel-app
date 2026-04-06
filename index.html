@@ -201,6 +201,7 @@
       padding: 8px;
       text-align: left;
       vertical-align: top;
+      word-break: break-word;
     }
 
     th {
@@ -697,14 +698,14 @@
 
         rawSummaryData = data.summary.raw || [];
 
-        const uniqueMonths = [...new Set(rawSummaryData.map(r => r['月']).filter(Boolean))].sort();
+        const uniqueMonths = [...new Set(rawSummaryData.map(r => String(r['月'] || '')).filter(Boolean))].sort();
         const currentSelection = monthFilter.value;
         monthFilter.innerHTML = '<option value="ALL">すべて表示</option>';
 
         uniqueMonths.forEach(m => {
           const opt = document.createElement('option');
           opt.value = m;
-          opt.textContent = m;
+          opt.textContent = formatMonthLabel(m, 'yyyy.m');
           monthFilter.appendChild(opt);
         });
 
@@ -727,7 +728,7 @@
       const selectedMonth = monthFilter.value;
       const filtered = selectedMonth === 'ALL'
         ? rawSummaryData
-        : rawSummaryData.filter(r => r['月'] === selectedMonth);
+        : rawSummaryData.filter(r => String(r['月'] || '') === selectedMonth);
 
       const materialMap = {};
       const customerMap = {};
@@ -768,6 +769,35 @@
       drawCustomerChart(customerData);
     }
 
+    function formatMonthLabel(value, mode = 'yyyy.m') {
+      if (value == null || value === '') return '';
+
+      const str = String(value).trim();
+
+      const m0 = str.match(/^(\d{4})\/(\d{1,2})$/);
+      if (m0) {
+        const year = Number(m0[1]);
+        const month = Number(m0[2]);
+        return mode === 'm月' ? `${month}月` : `${year}.${month}`;
+      }
+
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) {
+        const year = d.getFullYear();
+        const month = d.getMonth() + 1;
+        return mode === 'm月' ? `${month}月` : `${year}.${month}`;
+      }
+
+      const m1 = str.match(/^(\d{4})[.\-](\d{1,2})$/);
+      if (m1) {
+        const year = Number(m1[1]);
+        const month = Number(m1[2]);
+        return mode === 'm月' ? `${month}月` : `${year}.${month}`;
+      }
+
+      return str;
+    }
+
     function renderSummaryTable(container, rows) {
       if (!rows || rows.length === 0) {
         container.innerHTML = 'データがありません。';
@@ -781,7 +811,15 @@
 
       rows.forEach(row => {
         html += '<tr>';
-        headers.forEach(h => html += `<td>${escapeHtml(String(row[h] ?? ''))}</td>`);
+        headers.forEach(h => {
+          let value = row[h] ?? '';
+
+          if (h === '月') {
+            value = formatMonthLabel(value, 'yyyy.m');
+          }
+
+          html += `<td>${escapeHtml(String(value))}</td>`;
+        });
         html += '</tr>';
       });
 
@@ -796,14 +834,28 @@
       monthlyChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: data.map(d => d['月']),
+          labels: data.map(d => formatMonthLabel(d['月'], 'm月')),
           datasets: [{
             label: 'キャンセル枚数',
             data: data.map(d => Number(d['キャンセル合計枚数'] || 0)),
             backgroundColor: 'rgba(37, 99, 235, 0.7)'
           }]
         },
-        options: { responsive: true }
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            x: {
+              ticks: {
+                maxRotation: 0,
+                minRotation: 0
+              }
+            },
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
       });
     }
 
@@ -821,7 +873,10 @@
             hoverOffset: 4
           }]
         },
-        options: { responsive: true }
+        options: {
+          responsive: true,
+          maintainAspectRatio: true
+        }
       });
     }
 
@@ -839,7 +894,10 @@
             hoverOffset: 4
           }]
         },
-        options: { responsive: true }
+        options: {
+          responsive: true,
+          maintainAspectRatio: true
+        }
       });
     }
 
